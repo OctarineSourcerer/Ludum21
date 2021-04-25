@@ -10,9 +10,41 @@
 
 //"START OF JS"
 
-function drawCircle(x, y, radius, fill, stroke, strokeWidth) {
+// "LIBS"
+
+// Seeded random
+!function(n,t,e){function u(n){var t=this,e=function(){var s=4022871197;return function(n){n=String(n);for(var t=0;t<n.length;t++){var e=.02519603282416938*(s+=n.charCodeAt(t));e-=s=e>>>0,s=(e*=s)>>>0,s+=4294967296*(e-=s)}return 2.3283064365386963e-10*(s>>>0)}}();t.next=function(){var n=2091639*t.s0+2.3283064365386963e-10*t.c;return t.s0=t.s1,t.s1=t.s2,t.s2=n-(t.c=0|n)},t.c=1,t.s0=e(" "),t.s1=e(" "),t.s2=e(" "),t.s0-=e(n),t.s0<0&&(t.s0+=1),t.s1-=e(n),t.s1<0&&(t.s1+=1),t.s2-=e(n),t.s2<0&&(t.s2+=1),e=null}function o(n,t){return t.c=n.c,t.s0=n.s0,t.s1=n.s1,t.s2=n.s2,t}function s(n,t){var e=new u(n),s=t&&t.state,r=e.next;return r.int32=function(){return 4294967296*e.next()|0},r.double=function(){return r()+11102230246251565e-32*(2097152*r()|0)},r.quick=r,s&&("object"==typeof s&&o(s,e),r.state=function(){return o(e,{})}),r}t&&t.exports?t.exports=s:e&&e.amd?e(function(){return s}):this.alea=s}(0,"object"==typeof module&&module,"function"==typeof define&&define);
+
+
+// unseeded random
+
+function getRandom(rand,min, max)
+{
+  return Math.floor(rand * (max - min + 1)) + min;
+}
+
+function drawStarsBG()
+{
+  seedrand = new alea("SEED");
+  stars = 500,
+  colorrange = [0,60,240];
+
+  for (var i = 0; i < stars; i++) {
+      var x = seedrand() * cvs.offsetWidth;
+      y = seedrand() * cvs.offsetHeight,
+      radius = seedrand() * 1.2,
+      hue = colorrange[getRandom(seedrand(),0,colorrange.length - 1)],
+      sat = getRandom(seedrand(),50,100);
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 360);
+      ctx.fillStyle = "hsl(" + hue + ", " + sat + "%, 88%)";
+      ctx.fill();
+  }
+}
+
+function drawCircle(o, radius, fill, stroke, strokeWidth) {
   ctx.beginPath()
-  ctx.arc(x, y, radius, 0, 2 * Math.PI, false)
+  ctx.arc(o.x, o.y, radius, 0, 2 * Math.PI, false)
   if (fill) {
     ctx.fillStyle = fill
     ctx.fill()
@@ -48,35 +80,69 @@ function createNavmap()
 	page.prepend(cvs);
 }
 
+// The Last Question
+// The Traveling Spaceprobe Problem
+// Dying World -- something with Stars? Fading Stars?
+// Out of Space
+// Last Signal
+// The Last Tour -- like the Grand Tour by Voyager
+// ==> music band doing their last concerts?
+
+// Navmap inspired by a Famicase?
+
+//other event:  finding Voyager -- baby probe
 
 
+var stations = [];
+stations[0] = {name:"Home", target:{x:20,y:20}, alive:true}
+stations[1] = {name:"Alpha", target:{x:100,y:30}, alive:true}
+stations[2] = {name:"Beta", target:{x:70,y:130}, alive:true}
 
-var probe_mooving = true, velocity = 0.5;
-var probe_x = 20, probe_y = 20;
-var target_x = 100, target_y = 30;
+
+var probe = {x:20,y:20, moving:true,velocity:0.5}
+var target={x:100,y:30}
 
 
 
 function renderNavmap()
 {
 	ctx.clearRect(0,0, cvs.width, cvs.height);
-	drawCircle(probe_x, probe_y, 5, "white");
-	drawCircle(target_x, target_y, 5, false, "white");
+
+  drawStarsBG();
+
+  for(id in stations)
+  {
+    station = stations[id];
+    drawCircle(station.target, 5, false, "white");
+  }
+
+  drawCircle(probe, 5, "white");
+
 }
 
 
 function loopNavmap()
 {
-  if(probe_mooving)
+  if(probe.moving)
   {
-    dx = target_x-probe_x
-    dy = target_y-probe_y
+    dx = target.x-probe.x
+    dy = target.y-probe.y
     angle = Math.atan2(dy, dx)
-    xVelocity = velocity * Math.cos(angle);
-    yVelocity = velocity * Math.sin(angle);
+    xVelocity = probe.velocity * Math.cos(angle);
+    yVelocity = probe.velocity * Math.sin(angle);
 
-    probe_x += xVelocity
-    probe_y += yVelocity
+    probe.x += xVelocity
+    probe.y += yVelocity
+
+    // Rounding to avoid missing the target
+    if(Math.abs(probe.x - target.x) < 0.5) probe.x = target.x;
+    if(Math.abs(probe.y - target.y) < 0.5) probe.y = target.y;
+
+    if(target.x == probe.x && target.y == probe.y)
+    {
+      probe_moving = false;
+
+    }
 
   }
 	renderNavmap();
@@ -85,9 +151,13 @@ function loopNavmap()
 function moveNavmap()
 {
 
-
 }
 
+
+function probe_arrives()
+{
+
+}
 
 
 engine.extend('1.0.0', () => {
