@@ -62,22 +62,36 @@ function offset(el, event) {
 
 // Drawing methods
 
+function rotate(x,y,angle)
+{
+	return {x:Math.cos(angle)*x-Math.sin(angle)*y,y:Math.cos(angle)*y+Math.sin(angle)*x}
+}
+
 function drawStarsBG()
 {
   seedrand = new alea("SEED");
-  stars = 500,
+  stars = 2000,
   colorrange = [0,60,240];
 
+	var biggest = Math.max(cvs.offsetWidth, cvs.offsetHeight);
+
   for (var i = 0; i < stars; i++) {
-      var x = seedrand() * cvs.offsetWidth;
-      y = seedrand() * cvs.offsetHeight,
-      radius = seedrand() * 1.2,
-      hue = colorrange[getRandom(seedrand(),0,colorrange.length - 1)],
-      sat = getRandom(seedrand(),50,100);
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, 360);
-      ctx.fillStyle = "hsl(" + hue + ", " + sat + "%, 88%)";
-      ctx.fill();
+		var x = getRandom(seedrand(),-biggest,biggest);
+    var y = getRandom(seedrand(),-biggest,biggest);
+			t = tick/1000, r = rotate(x,y,t);
+			rx = r.x;
+			ry = r.y;
+
+			if (rx > 0 && ry > 0)
+			{
+	      radius = seedrand() * 1.2,
+	      hue = colorrange[getRandom(seedrand(),0,colorrange.length - 1)],
+	      sat = getRandom(seedrand(),50,100);
+	      ctx.beginPath();
+	      ctx.arc(rx, ry, radius, 0, 360);
+	      ctx.fillStyle = "hsl(" + hue + ", " + sat + "%, 88%)";
+	      ctx.fill();
+			}
   }
 }
 
