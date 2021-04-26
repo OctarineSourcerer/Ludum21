@@ -529,6 +529,7 @@ function probe_arrives()
 function clearArrival()
 {
 	hasArrived = syncSet("hasArrived",false);
+	mustDoEvent = syncSet("mustDoEvent",false);
 }
 
 function promptNavmap()
