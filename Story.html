@@ -160,22 +160,27 @@ function createNavmap()
 	customLink.id = "customLink";
 	customLink.dataset.cbGo = "";
 	page.prepend(customLink);
-	//<a href="jaavscript:void(0)" data-cb-go="XXX">_</a>
-
-	var formInner = '''
-	<form class="gform" method="post" action="https://script.google.com/macros/s/AKfycbzUHguZlAKBMyYPOpUAs2Zh7emp3dNjtsTSkPx3e-Atd8nkdwWLDs89yjK1x4Sse_y30g/exec">
-    <label class="hidden" for="text">Response: </label>
-        <input class="hidden" id="text" name="text" />
-        <input type="submit" value="Submit">
-</form>
-	'''
-
-	var formDiv = document.createElement("div");
-	formDiv.innerHTML = formInner;
-	page.prepend(formDiv);
-	// Change Value of hidden text
 	//
+	// var formInner = '<form class="gform" method="post" action="https://script.google.com/macros/s/AKfycbzUHguZlAKBMyYPOpUAs2Zh7emp3dNjtsTSkPx3e-Atd8nkdwWLDs89yjK1x4Sse_y30g/exec"><label class="hidden" for="text">Response: </label><input class="hidden" id="text" name="text" /><input type="submit" value="Submit"></form>'
+	//
+	// var formDiv = document.createElement("div");
+	// formDiv.innerHTML = formInner;
+	// page.prepend(formDiv);
+	// Change Value of hidden text
+	// Submit form
 
+}
+
+function sendSignalForm()
+{
+    var http = new XMLHttpRequest();
+    http.open("POST", "https://script.google.com/macros/s/AKfycbzUHguZlAKBMyYPOpUAs2Zh7emp3dNjtsTSkPx3e-Atd8nkdwWLDs89yjK1x4Sse_y30g/exec", true);
+    http.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+    var params = "text=" + finalSignal; // probably use document.getElementById(...).value
+    http.send(params);
+    http.onload = function() {
+        alert(http.responseText);
+    }
 }
 
 
@@ -563,8 +568,9 @@ function triggerArrival()
 		mustDoEvent = syncSet("mustDoEvent",false);
 		probe.moving = syncSet("probe_moving",true);
 		//Callback twine EVENT
+		hasArrived = syncSet("hasArrived",false);
 		gotoPassage("event_"+eventsTodo.indexOf(events_triggered-1));
-		//hasArrived = syncSet("hasArrived",false);
+
 	}
 	else
 	{ //Callback twine STAR
