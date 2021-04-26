@@ -217,7 +217,7 @@ function renderNavmap()
 			}
 			else
 			{ //Selection for arrival
-					if(isArrived && id == probe.current_station && mustDoEvent == false)
+					if(hasArrived && id == probe.current_station && mustDoEvent == false)
 					{
 						//
 						//drawCircle(station.target, stationRadius, "grey");
@@ -245,7 +245,7 @@ function renderNavmap()
   }
 
   // Probe
-	if(isArrived)
+	if(hasArrived)
 	{
 
 		if((probe.x - cursor.x)**2 + (probe.y-cursor.y)**2 <= (stationRadius*2)**2)
@@ -274,7 +274,7 @@ function renderNavmap()
 function drawInstruction()
 {
 
-	if(isArrived)
+	if(hasArrived)
 	{
 		ctx.globalAlpha = (Math.cos(tick/10%6.28)+1)/2;
 
@@ -308,7 +308,7 @@ function navmapOver(e)
 function navmapClick(e)
 {
   cursor = offset(cvs,e);
-	if(isArrived && (probe.x - cursor.x)**2 + (probe.y-cursor.y)**2 <= (stationRadius*2)**2) // CLick on probe arrival
+	if(hasArrived && (probe.x - cursor.x)**2 + (probe.y-cursor.y)**2 <= (stationRadius*2)**2) // CLick on probe arrival
 	{
 		triggerArrival();
 	}
@@ -414,12 +414,12 @@ var target={x:100,y:30};
 var event_target = {};
 var cursor = {x:0, y:0};
 
-var isArrived = false; // True when is arrived to a destination and you have to manually activate arrival
-var mustDoEvent = false; // True when the next actual target must be an event
+var hasArrived = syncSet("hasArrived",false); // True when is arrived to a destination and you have to manually activate arrival
+var mustDoEvent = syncSet("mustDoEvent",false); // True when the next actual target must be an event
 var promptNavigation = false;
 
 var tick = 0;
-var events_triggered = 0, eventsTodo = [1,2]; // Index of events to actually do
+var events_triggered = 0, eventsTodo = []; // Index of events to actually do
 
 function loopNavmap()
 {
@@ -461,9 +461,14 @@ function loopNavmap()
 				visited[probe.current_station] = true;
 				probe.moving_towards = -1;
 			}
-      probe.moving = false;
+      probe.moving = syncSet("probe_moving",false);
 			probe_arrives();
     }
+
+		last_target = stations[probe.history[probe.history.length-1]].target;
+		progress = (100*dist(probe,last_target)/dist(current_target,last_target)).toFixed();
+		if(progress == "NaN") progress = "0";
+		syncSet("progress",  progress);
 
   }
 	renderNavmap();
@@ -473,7 +478,7 @@ function loopNavmap()
 function checkCanMove(id)
 {
 	id*=1;
-	if(probe.moving || isArrived)
+	if(probe.moving || hasArrived)
 	{
 		return false;
 	}
@@ -491,16 +496,18 @@ function moveNavmap(id) // TODO: After each destination choice in Twine, call {m
 		target = stations[id].target;
 		event_target.x = (target.x+probe.x)/2;
 		event_target.y = (target.y+probe.y)/2;
-		probe.moving = true;
+		probe.moving = syncSet("probe_moving",true);
 		probe.moving_towards = id;
 		promptNavigation = false;
 
 		if(eventsTodo.indexOf(events_triggered) != -1)
 		{
-			mustDoEvent = true;
+			mustDoEvent = syncSet("mustDoEvent",false);
 		}
 
 		events_triggered++;
+
+		hasArrived = syncSet("hasArrived",false);
 
 	}
 	else {
@@ -510,9 +517,16 @@ function moveNavmap(id) // TODO: After each destination choice in Twine, call {m
 	return "";
 }
 
+function dist(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2)}
+
 function probe_arrives()
 {
-	isArrived = true;
+	hasArrived = syncSet("hasArrived",true);
+}
+
+function clearArrival()
+{
+	hasArrived = syncSet("hasArrived",false);
 }
 
 function promptNavmap()
@@ -527,20 +541,26 @@ function triggerArrival()
 
 	if(mustDoEvent)
 	{
-		mustDoEvent = false;
-		isArrived = false;
-		probe.moving = true;
+		mustDoEvent = syncSet("mustDoEvent",false);
+		probe.moving = syncSet("probe_moving",true);
 		//Callback twine EVENT
 		gotoPassage("event_"+eventsTodo.indexOf(events_triggered-1));
+		//hasArrived = syncSet("hasArrived",false);
 	}
 	else
 	{ //Callback twine STAR
-		isArrived = false;
-		probe.moving = false;
 		gotoPassage(stations[probe.current_station].name);
+		probe.moving = syncSet("probe_moving",false);
+		//hasArrived = syncSet("hasArrived",false);
 	}
 	return "";
 
+}
+
+function syncSet(name,value) // Synchronize setting variables in Twine AND JS
+{
+	engine.state.set(name, value)
+	return value;
 }
 
 
@@ -565,6 +585,13 @@ engine.extend('1.0.0', () => {
     }, ...config.template.inserts];
 });
 
+engine.extend('1.0.0', () => {
+    config.template.inserts = [{
+        match: /^clear arrival/i,
+        render: clearArrival
+    }, ...config.template.inserts];
+});
+
 
 
 init();
@@ -572,7 +599,8 @@ init();
 </script><tw-passagedata pid="1" name="Initial temp" tags="" position="77,427" size="200,100">logs: []
 added: {}
 progress: 0
-hasArrived: true
+hasArrived: false
+probe_moving: false
 betweenStars: false
 finalJourney: false
 destination: &quot;&quot;
@@ -597,85 +625,7 @@ But I am warm. 522 Kelvin. 248 Celcius. Operating successfully. Good.
 
 I was given a [[task-&gt;Mission Parameters]]. I must perform it.
 
-[JavaScript]
-engine.extend(&#39;1.0.0&#39;, () =&gt; {
-    config.template.modifiers = [...config.template.modifiers, {
-        match: /^typewriter\s/i,
-        process(output, state, {invocation}) {
-            // Get the time
-            let bothTimes = invocation.replace(/^typewriter\s/i, &#39;&#39;);
-            let [letterDelay, sentenceDelay] = bothTimes.split(&#39; &#39;);
-            // Default no extra sentence delay
-            sentenceDelay = Number(sentenceDelay || letterDelay);
-            letterDelay = Number(letterDelay || 0);
-
-            // Save original text
-            let text = output.text;
-
-            // Get length of original text
-            let length = text.length;
-
-            // Set initial index
-            let index = 0;
-
-            // Wipe out output to start
-            output.text = &quot;&quot;;
-
-            // Loop through the text
-            //  -- Add a new &lt;span&gt; for each character
-            //  -- Set the class &quot;fade-in&quot;
-            //  -- Set the delay as equal to time multiplied position
-            let isNewSentence = false;
-            // Sum of delays so far
-            let totalDelay = state.totalDelay || 0;
-            for(let i = 0; i &lt; length; i++) {
-                let thisChar = text[i];
-                let delay = letterDelay;
-                if(isNewSentence) {
-                    delay = sentenceDelay;
-                    isNewSentence = false;
-                }
-                totalDelay += delay;
-                output.text += &#96;&lt;span class=&#39;fade-in&#39; style=&#39;animation-delay: ${totalDelay}ms&#39;&gt;${text[i]}&lt;/span&gt;&#96;;
-                // If we hit a full stop, switch to other delay
-                if(thisChar == &quot;.&quot;) {
-                    isNewSentence = true;
-                }
-            }
-            state.fullDelay = totalDelay;
-        }
-    }];
-});
-
-[continued; JavaScript]
-engine.extend(&#39;1.0.0&#39;, () =&gt; {
-    config.template.inserts = [{
-        match: /^move navmap$/i,
-        render: (firstArg, props, invocation) =&gt; {
-			console.log(&#96;Moving navmap to ${firstArg}&#96;);
-		}
-    }, ...config.template.inserts];
-});
-
-[continued; JavaScript]
-engine.extend(&#39;1.0.0&#39;, () =&gt; {
-    config.template.inserts = [{
-        match: /^prompt navmap$/i,
-        render: () =&gt; {
-			console.log(&#96;Setting navmap to prompt mode&#96;);
-		}
-    }, ...config.template.inserts];
-});
-
-[continued; JavaScript]
-engine.extend(&#39;1.0.0&#39;, () =&gt; {
-    config.template.inserts = [{
-        match: /^trigger arrival$/i,
-        render: () =&gt; {
-			console.log(&#96;Player acknowledged arrival!&#96;);
-		}
-    }, ...config.template.inserts];
-});</tw-passagedata><tw-passagedata pid="2" name="Mission Parameters" tags="" position="81,583" size="100,100">logs (!added.missionParameters): [...logs, &quot;Mission Parameters&quot;]
+</tw-passagedata><tw-passagedata pid="2" name="Mission Parameters" tags="" position="81,583" size="100,100">logs (!added.missionParameters): [...logs, &quot;Mission Parameters&quot;]
 added.missionParameters: true
 --
 **Mission Log #01**
@@ -707,8 +657,11 @@ There lies before me a system I can reach:
 --
 
 [continue]
-[if hasArrived]
+[if hasArrived && !mustDoEvent]
 This stretch of the journey is complete. I must [[stop here-&gt;SleepingAroundSystem]], sleeping and charging before the next leg of my journey. I may read [[logs-&gt;All Logs]] once more.
+
+[if hasArrived && mustDoEvent]
+SUDDENLY [[]]
 
 [else]
 I drift between the stars, towards my next destination. It is silent. I have my [[logs-&gt;All Logs]] to keep me company.
@@ -717,7 +670,7 @@ I drift between the stars, towards my next destination. It is silent. I have my 
 --
 {embed passage named: &#39;Between Stars&#39;}
 
-{move navmap: &quot;star_2&quot;}</tw-passagedata><tw-passagedata pid="7" name="star_1" tags="WingedCiv TowardsWingedCiv" position="41,957" size="100,100">destination: &quot;Winged Logs&quot;
+{move navmap: 2}</tw-passagedata><tw-passagedata pid="7" name="star_1" tags="WingedCiv TowardsWingedCiv" position="41,957" size="100,100">destination: &quot;Winged Logs&quot;
 --
 [note]
 Imagine we&#39;d clicked &quot;burning star&quot;, it goes to this
@@ -725,7 +678,7 @@ Imagine we&#39;d clicked &quot;burning star&quot;, it goes to this
 [continue]
 {embed passage named: &#39;Between Stars&#39;}
 
-{move navmap: &quot;star_1&quot;}</tw-passagedata><tw-passagedata pid="8" name="Winged Logs" tags="" position="38,1067" size="100,100">logs (!added.winged): [...logs, &quot;Winged Logs&quot;]
+{move navmap: 1}</tw-passagedata><tw-passagedata pid="8" name="Winged Logs" tags="" position="38,1067" size="100,100">logs (!added.winged): [...logs, &quot;Winged Logs&quot;]
 added.winged: true
 --
 
@@ -747,6 +700,7 @@ _Even if we do not increase our numbers further, I fear we might stagnate. Our p
 
 [[End-&gt;Winged Reflections]]</tw-passagedata><tw-passagedata pid="11" name="SleepingAroundSystem" tags="" position="619,438" size="100,100">betweenStars: false
 --
+{clear arrival}
 I will now stop and rest, charging until I have enough energy to make the next distance between the stars. It will take a long time, but I may learn much.
 
 [[Sleep-&gt;Awakening]]</tw-passagedata><tw-passagedata pid="12" name="Blind Logs" tags="" position="561,1068" size="100,100">logs (!added.blind): [...logs, &quot;Blind Logs&quot;]
@@ -839,7 +793,7 @@ This is the only destination for this bit
 [continue]
 {embed passage named: &#39;Between Stars&#39;}
 
-{move navmap: &quot;star_3&quot;}</tw-passagedata><tw-passagedata pid="21" name="Zealots Logs" tags="" position="308,1637" size="100,100">logs (!added.zealots): [...logs, &quot;Zealots Logs&quot;]
+{move navmap: 3}</tw-passagedata><tw-passagedata pid="21" name="Zealots Logs" tags="" position="308,1637" size="100,100">logs (!added.zealots): [...logs, &quot;Zealots Logs&quot;]
 added.zealots: true
 --
 **Observations of Planet 2**
@@ -891,7 +845,7 @@ I was actually not entirely sure if I should have the species be dead due to the
 --
 {embed passage named: &#39;Between Stars&#39;}
 
-{move navmap: &quot;star_4&quot;}</tw-passagedata><tw-passagedata pid="27" name="Golems Logs" tags="" position="56.5,2167.5" size="100,100">logs (!added.golems): [...logs, &quot;Golems Logs&quot;]
+{move navmap: 4}</tw-passagedata><tw-passagedata pid="27" name="Golems Logs" tags="" position="56.5,2167.5" size="100,100">logs (!added.golems): [...logs, &quot;Golems Logs&quot;]
 added.golems: true
 --
 **Observations of Planet 3**
@@ -930,7 +884,7 @@ But... I think I learned much from Yolen. I will miss him, even if he will alway
 --
 {embed passage named: &#39;Between Stars&#39;}
 
-{move navmap: &quot;star_5&quot;}</tw-passagedata><tw-passagedata pid="32" name="Scholar Logs" tags="" position="504.5,2167.5" size="100,100">logs (!added.scholar): [...logs, &quot;Scholar Logs&quot;]
+{move navmap: 5}</tw-passagedata><tw-passagedata pid="32" name="Scholar Logs" tags="" position="504.5,2167.5" size="100,100">logs (!added.scholar): [...logs, &quot;Scholar Logs&quot;]
 added.scholar: true
 --
 
@@ -985,7 +939,7 @@ Okay. Yeah. I get you. Let&#39;s just enjoy these drinks we do have, yeah?\
 [continued]
 [[End-&gt;Scholar Reflection]]</tw-passagedata><tw-passagedata pid="35" name="Scholar Reflection" tags="" position="657.5,2450.5" size="100,100">...Reginus and Samaran seemed to be friends? But not? I am not sure. Perhaps they were in the end. I do not know if I worry about death. But I cannot fail my mission. And there is still so much to learn! Not being able to do either concerns me.
 
-{link to: &quot;Final Journey&quot;, label: &#39;Log analysis complete&#39;}</tw-passagedata><tw-passagedata pid="36" name="Stuff I&#39;d have still liked to explore" tags="" position="955,733" size="100,100">[note]
+{link to: &quot;star_6&quot;, label: &#39;Log analysis complete&#39;}</tw-passagedata><tw-passagedata pid="36" name="Stuff I&#39;d have still liked to explore" tags="" position="955,733" size="100,100">[note]
 * fight against it vs don&#39;t go gentle into the night, for a civ that KNOWS what the Anomaly is
 * Whether or not to end a life that is in pain or terminal
 
@@ -997,17 +951,18 @@ At least my destination grows ever closer.
 
 &gt; [[A warm-orange beacon-&gt;star_4]]</tw-passagedata><tw-passagedata pid="38" name="Choose Destination 5" tags="" position="501.5,1889.5" size="100,100">This is likely to be the last recharging stop before I reach the Anomaly. It looms larger now. There are no stars within its expanse.
 
-&gt; [[Purple blaze in the haze of a nebula-&gt;star_5]]</tw-passagedata><tw-passagedata pid="39" name="Final Journey" tags="" position="323.5,2670.5" size="100,100">betweenStars: true
+&gt; [[Purple blaze in the haze of a nebula-&gt;star_5]]</tw-passagedata><tw-passagedata pid="39" name="star_6" tags="" position="323.5,2670.5" size="100,100">betweenStars: true
 finalJourney: true
 --
 [if !hasArrived]
+{move navmap: 6}
 This is the last journey before I reach the Anomaly. It is not a point any longer. It is vast, and swallows the sky. Soon I will scan it, and I will know its nature.
 
 I am a little scared. What do I do once my mission is over?
 
 Do I [[read my logs-&gt;All Logs]] as I travel?
 
-*Journey progress: \[{progress}\]*
+*Journey progress: \[{progress}%\]*
 
 [else]
 I am close to the wall now. I know it moves towards me.
