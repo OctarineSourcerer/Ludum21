@@ -656,20 +656,24 @@ There lies before me a system I can reach:
 {prompt navmap}
 
 &gt; [[A blazing hot star, incandescent in the night-&gt;star_1]]</tw-passagedata><tw-passagedata pid="5" name="Between Stars" tags="" position="463,444" size="100,100">betweenStars: true
+arrival: hasArrived || (progress &gt;= 100)
 eventTarget (mustDoEvent): &quot;event_&quot;+(whichEvent || &quot;0&quot;)
 --
-
 [continue]
-[if hasArrived &amp;&amp; !mustDoEvent]
+[if arrival &amp;&amp; !mustDoEvent]
 This stretch of the journey is complete. I must [[stop here-&gt;SleepingAroundSystem]], sleeping and charging before the next leg of my journey. I may read [[logs-&gt;All Logs]] once more.
 
 [if mustDoEvent]
 Oh! {link to: eventTarget, label: &#39;Something unexpected&#39;} happened.
 
-[if !hasArrived]
+[if !arrival]
 I drift between the stars, towards my next destination. It is silent. I have my [[logs-&gt;All Logs]] to keep me company.
 
-*Journey progress: \[{progress}%\]*</tw-passagedata><tw-passagedata pid="6" name="star_2" tags="BlindCiv" position="561,953" size="100,100">destination: &quot;Blind Logs&quot;
+*Journey progress: \[{progress}%\]*
+\[[Refresh-&gt;Between Stars]]
+
+[if !mustDoEvent]
+{clear arrival}</tw-passagedata><tw-passagedata pid="6" name="star_2" tags="BlindCiv" position="561,953" size="100,100">destination: &quot;Blind Logs&quot;
 --
 {embed passage named: &#39;Between Stars&#39;}
 
