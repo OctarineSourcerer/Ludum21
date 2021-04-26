@@ -369,18 +369,6 @@ function gotoPassage(passageName) {
 	customLink = document.getElementById("customLink");
 	customLink.dataset.cbGo = passageName;
 	customLink.click();
-	console.log(customLink);
-
-        // if (passageName) {
-        //     var $hiddenLink = $(document.createElement('tw-link'));
-        //     $hiddenLink
-        //         .addClass('custom-goto')
-        //         .css('display', 'none')
-        //         .attr('passage-name', passageName)
-        //         .append('blah')
-        //         .appendTo('tw-passage')
-        //         .trigger('click');
-        // }
 	}
 
 
@@ -399,23 +387,26 @@ function gotoPassage(passageName) {
 
 //other event:  finding Voyager -- baby probe
 
-
-var stations = [];
-stations[0] = {name:"star_0", target:{x:100,y:20},  alive:true, goto:[1,2]}
-
-stations[1] = {name:"star_1", target:{x:30,y:90}, alive:true, goto:[3]}
-stations[2] = {name:"star_2", target:{x:200,y:50},alive:true, goto:[3]}
-
-stations[3] = {name:"star_3", target:{x:120,y:120},  alive:true, goto:[4,5,6]}
-
+// Can actually support a graph-like structure!
+/*eg:
 stations[4] = {name:"star_4", target:{x:70,y:240}, alive:true, goto:[7,8]}
 stations[5] = {name:"star_5", target:{x:170,y:200}, alive:true, goto:[7,8]}
 stations[6] = {name:"star_6", target:{x:220,y:210}, alive:true, goto:[7,8]}
+*/
 
-stations[7] = {name:"star_7", target:{x:80,y:330}, alive:true, goto:[9]}
-stations[8] = {name:"star_8", target:{x:160,y:390}, alive:true, goto:[9]}
 
-stations[9] = {name:"star_9", target:{x:170,y:450}, alive:true, goto:[], last:true}
+var stations = [];
+stations[0] = {name:"star_0", target:{x:100,y:20},  alive:true, goto:[1]}
+
+stations[1] = {name:"star_1", target:{x:30,y:90}, alive:true, goto:[2]}
+stations[2] = {name:"star_2", target:{x:200,y:50},alive:true, goto:[3]}
+
+stations[3] = {name:"star_3", target:{x:120,y:120},  alive:true, goto:[4]}
+
+stations[4] = {name:"star_4", target:{x:70,y:240}, alive:true, goto:[5]}
+stations[5] = {name:"star_5", target:{x:270,y:200}, alive:true, goto:[6]}
+
+stations[6] = {name:"star_6", target:{x:170,y:450}, alive:true, goto:[], last:true}
 
 var visited = [];
 for(i in stations)visited[i] = false;
@@ -431,7 +422,7 @@ var mustDoEvent = false; // True when the next actual target must be an event
 var promptNavigation = false;
 
 var tick = 0;
-var events_triggered = 0, eventsTodo = [1,2,3]; // Index of events to actually do
+var events_triggered = 0, eventsTodo = []; // Index of events to actually do
 
 function loopNavmap()
 {
@@ -531,7 +522,9 @@ function probe_arrives()
 
 function promptNavmap()
 {
+	//alert("called")
 	promptNavigation = true;
+	return '';
 }
 
 function triggerArrival()
@@ -551,6 +544,7 @@ function triggerArrival()
 		probe.moving = false;
 		gotoPassage(stations[probe.current_station].name);
 	}
+	return "";
 
 }
 
@@ -586,6 +580,16 @@ progress: 0
 hasArrived: true
 betweenStars: false
 destination: &quot;&quot;
+
+sound.effect.DarkWasTheNight.url: 'src/DarkWasTheNight.mp3'
+sound.effect.DarkWasTheNight.description: '[A recording of Dark Was the Night (Cold Was the Ground). A song sent with the first Voyager 1 probe.]'
+
+sound.effect.HorseWithNoName.url: 'src/HorseWithNoName.mp3'
+sound.effect.DarkWasTheNight.description: '[A computer-made cover of "A Horse with No Name" by America]'
+
+sound.effect.MorseCode.url: 'src/HorseWithNoName.mp3'
+sound.effect.MorseCode.description: '[A mysterious transmission.]'
+
 --
 [note]
 Noooo idea why, but adding multiple inserts seems to NEED multiple JS blocks
@@ -646,36 +650,7 @@ engine.extend(&#39;1.0.0&#39;, () =&gt; {
         }
     }];
 });
-
-[continued; JavaScript]
-engine.extend(&#39;1.0.0&#39;, () =&gt; {
-    config.template.inserts = [{
-        match: /^move navmap$/i,
-        render: (firstArg, props, invocation) =&gt; {
-			console.log(&#96;Moving navmap to ${firstArg}&#96;);
-		}
-    }, ...config.template.inserts];
-});
-
-[continued; JavaScript]
-engine.extend(&#39;1.0.0&#39;, () =&gt; {
-    config.template.inserts = [{
-        match: /^prompt navmap$/i,
-        render: () =&gt; {
-			console.log(&#96;Setting navmap to prompt mode&#96;);
-		}
-    }, ...config.template.inserts];
-});
-
-[continued; JavaScript]
-engine.extend(&#39;1.0.0&#39;, () =&gt; {
-    config.template.inserts = [{
-        match: /^trigger arrival$/i,
-        render: () =&gt; {
-			console.log(&#96;Player acknowledged arrival!&#96;);
-		}
-    }, ...config.template.inserts];
-});</tw-passagedata><tw-passagedata pid="2" name="Mission Parameters" tags="" position="81,581" size="100,100">logs (!added.missionParameters): [...logs, &quot;Mission Parameters&quot;]
+</tw-passagedata><tw-passagedata pid="2" name="Mission Parameters" tags="" position="81,581" size="100,100">logs (!added.missionParameters): [...logs, &quot;Mission Parameters&quot;]
 added.missionParameters: true
 --
 **Mission Log #01**
