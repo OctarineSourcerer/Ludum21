@@ -492,6 +492,11 @@ function loopNavmap()
 	renderNavmap();
 }
 
+function forceNavmap()
+{
+	mustDoEvent = false;
+	probe.moving = true;
+}
 
 function checkCanMove(id)
 {
@@ -546,6 +551,7 @@ function probe_arrives()
 function clearArrival()
 {
 	hasArrived = syncSet("hasArrived",false);
+	mustDoEvent = syncSet("mustDoEvent",false);
 }
 
 function promptNavmap()
@@ -564,7 +570,7 @@ function triggerArrival()
 		probe.moving = syncSet("probe_moving",true);
 		//Callback twine EVENT
 		gotoPassage("event_"+eventsTodo.indexOf(events_triggered-1));
-		//hasArrived = syncSet("hasArrived",false);
+		hasArrived = syncSet("hasArrived",false);
 	}
 	else
 	{ //Callback twine STAR
@@ -624,6 +630,12 @@ engine.extend('1.0.0', () => {
     }, ...config.template.inserts];
 });
 
+engine.extend('1.0.0', () => { // FOrce the f***ing navmap to move
+    config.template.inserts = [{
+        match: /^force navmap/i,
+        render: forceNavmap
+    }, ...config.template.inserts];
+});
 engine.extend('1.0.0', () => { // FOrce the f***ing navmap to move
     config.template.inserts = [{
         match: /^force navmap/i,
@@ -709,13 +721,7 @@ I drift between the stars, towards my next destination. It is silent. I have my 
 *Journey progress: \[{progress}%\]* \
 [[Refresh-&gt;Between Stars]]
 
-[if eventDone]
-{move navmap: eventDone}
-
-[continued; JavaScript]
-if(eventDone) {
-	eventDone = false;
-}</tw-passagedata><tw-passagedata pid="6" name="star_2" tags="BlindCiv" position="561,953" size="100,100">destination: &quot;Blind Logs&quot;
+{clear arrival}</tw-passagedata><tw-passagedata pid="6" name="star_2" tags="BlindCiv" position="561,953" size="100,100">destination: &quot;Blind Logs&quot;
 --
 {embed passage named: &#39;Between Stars&#39;}
 
@@ -1086,8 +1092,9 @@ engine.state.set(&quot;config.header.center&quot;, &quot;Music: Kyle Worall&quot
 engine.state.set(&quot;config.header.right&quot;, &quot;Cover: Nathan Trouvain&quot;);
 
 [align center]
-[[Lone Signal-&gt;Story start]]</tw-passagedata><tw-passagedata pid="46" name="event_0" tags="" position="779,681" size="100,100">eventDone: 3
+[[Lone Signal-&gt;Story start]]</tw-passagedata><tw-passagedata pid="46" name="event_0" tags="" position="779,681" size="100,100">mustDoEvent: false
 --
+{force navmap}
 During a massive optimization of the data storage system, it appears that there&#39;s a file in here that shouldn&#39;t be. It comes with a note.
 
 _Knowing the Probe will stay up that long in that much emptiness, I couldn’t help but feel bad for it. So I smuggled a little something. Hope this will pass the checksum!_
@@ -1095,15 +1102,15 @@ _Knowing the Probe will stay up that long in that much emptiness, I couldn’t h
 _- Inès Rabiata, Intern._
 
 The file appears to contain a piece of software that access the audio output channels.
-{force navmap}
-[[Delete the file for safety purposes.-&gt;Between Stars]]
 
-[[Open the file]]</tw-passagedata><tw-passagedata pid="47" name="Open the file" tags="" position="782,811" size="100,100">{sound effect: &#39;HorseWithNoName&#39;}
+
+[[Open the file]]</tw-passagedata><tw-passagedata pid="47" name="Open the file" tags="" position="790,860" size="100,100">{sound effect: &#39;HorseWithNoName&#39;}
 
 Space feels a little less lonely now.
 
-[[Continue Journey-&gt;Between Stars]]</tw-passagedata><tw-passagedata pid="48" name="event_1" tags="" position="1011,683" size="100,100">eventDone: 5
+[[Continue Journey-&gt;Between Stars]]</tw-passagedata><tw-passagedata pid="49" name="event_1" tags="" position="1011,683" size="100,100">mustDoEvent: false
 --
+{force navmap}
 Suddenly, sensors print out a curious message.
 
 They picked out a floating technological artifact nearby. That, in itself, is not unusual. What&#39;s truly bizarre is that this artifact was *recognized* by the sensors.
@@ -1124,7 +1131,6 @@ It also contains a playlist of their favorite songs.
 
 [[Play one of them at random]]</tw-passagedata><tw-passagedata pid="51" name="Play one of them at random" tags="" position="1011,1109" size="100,100">{sound effect: &#39;DarkWasTheNight&#39;}
 This is pleasant. Voyager got quite far!
-{force navmap}
 
 [[Continue Journey-&gt;Between Stars]]</tw-passagedata><tw-passagedata pid="52" name="Submit" tags="" position="327,3563" size="100,100">{send signal}
 **The End**
