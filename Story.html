@@ -161,21 +161,6 @@ function createNavmap()
 	customLink.dataset.cbGo = "";
 	page.prepend(customLink);
 	//<a href="jaavscript:void(0)" data-cb-go="XXX">_</a>
-
-	var formInner = '''
-	<form class="gform" method="post" action="https://script.google.com/macros/s/AKfycbzUHguZlAKBMyYPOpUAs2Zh7emp3dNjtsTSkPx3e-Atd8nkdwWLDs89yjK1x4Sse_y30g/exec">
-    <label class="hidden" for="text">Response: </label>
-        <input class="hidden" id="text" name="text" />
-        <input type="submit" value="Submit">
-</form>
-	'''
-
-	var formDiv = document.createElement("div");
-	formDiv.innerHTML = formInner;
-	page.prepend(formDiv);
-	// Change Value of hidden text
-	//
-
 }
 
 
@@ -323,9 +308,7 @@ function navmapOver(e)
 
 function navmapClick(e)
 {
-	//Disabled navmap interaction
-	//cursor = offset(cvs,e);
-
+  cursor = offset(cvs,e);
 	if(hasArrived && (probe.x - cursor.x)**2 + (probe.y-cursor.y)**2 <= (stationRadius*2)**2) // CLick on probe arrival
 	{
 		triggerArrival();
@@ -521,7 +504,7 @@ function moveNavmap(id) // TODO: After each destination choice in Twine, call {m
 		if(eventsTodo.indexOf(events_triggered) != -1)
 		{
 			mustDoEvent = syncSet("mustDoEvent",true);
-			whichEvent = syncSet("whichEvent", eventsTodo.indexOf(events_triggered));
+			syncSet("whichEvent", eventsTodo.indexOf(events_triggered));
 		}
 
 		events_triggered++;
