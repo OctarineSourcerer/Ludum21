@@ -302,7 +302,8 @@ function drawInstruction()
 
 function navmapOver(e)
 {
-  cursor = offset(cvs,e)
+	//Disabled navmap interaction
+  //cursor = offset(cvs,e)
 };
 
 function navmapClick(e)
@@ -502,7 +503,8 @@ function moveNavmap(id) // TODO: After each destination choice in Twine, call {m
 
 		if(eventsTodo.indexOf(events_triggered) != -1)
 		{
-			mustDoEvent = syncSet("mustDoEvent",false);
+			mustDoEvent = syncSet("mustDoEvent",true);
+			syncSet("whichEvent", eventsTodo.indexOf(events_triggered));
 		}
 
 		events_triggered++;
@@ -659,9 +661,6 @@ There lies before me a system I can reach:
 [continue]
 [if hasArrived && !mustDoEvent]
 This stretch of the journey is complete. I must [[stop here-&gt;SleepingAroundSystem]], sleeping and charging before the next leg of my journey. I may read [[logs-&gt;All Logs]] once more.
-
-[if hasArrived && mustDoEvent]
-SUDDENLY [[]]
 
 [else]
 I drift between the stars, towards my next destination. It is silent. I have my [[logs-&gt;All Logs]] to keep me company.
