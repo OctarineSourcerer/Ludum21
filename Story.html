@@ -427,7 +427,7 @@ var visited = [];
 for(i in stations)visited[i] = false;
 visited[0] = true;
 
-var probe = {x:20,y:20, moving:false,velocity:2,current_station:0,history:[0],moving_towards:0};
+var probe = {x:20,y:20, moving:false,velocity:0.5,current_station:0,history:[0],moving_towards:0};
 var target={x:100,y:30};
 var event_target = {};
 var cursor = {x:0, y:0};
